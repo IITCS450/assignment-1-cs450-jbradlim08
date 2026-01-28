@@ -43,17 +43,9 @@ int main(int c,char**v){
 
     // PROCESS OF PARSING THE FILE CONTENT
     while (fgets(line, sizeof(line), file)) {
-        if (sscanf(line, "Pid:%d", &pid) == 1) {// blank space
-        }       
-        else if (sscanf(line, "Name:%255s", cmd) == 1) { }
-        else if (strncmp(line, "State:", 6) == 0) {
-            char *p = line + 6;  // skipping 6 characters
-            while (*p && isspace((unsigned char)*p)) // loop until non-space
-                p++;
-            if (*p) // check not null
-                state = *p;
-        }
+        if (sscanf(line, "Pid:%d", &pid) == 1) { }       
         else if (sscanf(line, "PPid:%d", &ppid) == 1) { }
+        else if (sscanf(line, "Name:%255s", cmd) == 1) { }
         else if (sscanf(line, "VmRSS:%255[^\n]", vm_rss) == 1) {
             char *p = vm_rss;
             while (*p && isspace((unsigned char)*p)) p++;
@@ -62,7 +54,7 @@ int main(int c,char**v){
     }
     fclose(file);
 
-    // PROCESS OF READING /proc/[pid]/stat FOR CPU TIME
+    // PROCESS OF READING /proc/[pid]/stat FOR 'STATE' AND 'CPU TIME'
     snprintf(path, sizeof(path), "/proc/%s/stat", v[1]);
     FILE *statf = fopen(path, "r");
     if (statf) {
@@ -70,8 +62,8 @@ int main(int c,char**v){
             char *r = strchr(line, ')');
             if (r && r[1] == ' ') {
                 r += 2; /* skip ") " */
-                if (sscanf(r, "%c %d %*d %*d %*d %*d %*u %*u %*u %*u %*u %ld %ld",
-                           &state, &ppid, &user_time, &sys_time) == 4) {
+                if (sscanf(r, "%c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %ld %ld",
+                    &state, &user_time, &sys_time) == 3) {   
                 }
             }
         }
@@ -83,16 +75,17 @@ int main(int c,char**v){
     printf("State: %c\n", state);
     printf("PPID: %d\n", ppid);
     printf("Cmd: %s\n", cmd[0] ? cmd : "unknown");
-    {
-        long hz = sysconf(_SC_CLK_TCK);
-        if (hz > 0) {
-            double user_sec = (double)user_time / (double)hz;
-            double sys_sec = (double)sys_time / (double)hz;
-            printf("CPU: %.3f %.3f\n", user_sec, sys_sec);
-        } else {
-            printf("CPU: %ld %ld\n", user_time, sys_time);
-        }
+    
+    // Convert clock ticks to seconds
+    long hz = sysconf(_SC_CLK_TCK);
+    if (hz > 0) {
+        double user_sec = (double)user_time / (double)hz;
+        double sys_sec = (double)sys_time / (double)hz;
+        printf("CPU: %.3f %.3f\n", user_sec, sys_sec);
+    } else {
+        printf("CPU: %ld %ld\n", user_time, sys_time);
     }
+    
     printf("VmRSS: %s\n", vm_rss[0] ? vm_rss : "unknown");
 
     return 0;
