@@ -29,7 +29,13 @@ int main(int c,char**v){
     // PROCESS OF OPENING THE FILE
     FILE *file = fopen(path,"r"); // open file for reading
     if(!file){ // if open failed
-        perror("fopen");
+        if (errno == ENOENT) {
+            fprintf(stderr, "ERROR: PID not found\n");
+        } else if (errno == EACCES) {
+            fprintf(stderr, "ERROR: Permission denied\n");
+        } else {
+            perror("fopen");
+        }
         return 1;
     }
 
