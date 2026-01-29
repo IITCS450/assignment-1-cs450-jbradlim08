@@ -22,7 +22,7 @@ int main(int c,char**v){
     // PROCESS OF STARTING THE TIMER AND FORKING
     clock_gettime(CLOCK_MONOTONIC, &start); // start before fork
     pid_t pid = fork();
-    if(pid==0){
+    if(pid==0){ // if child process fails
         execvp(v[1], &v[1]);
         perror("execvp");
         _exit(1); 
