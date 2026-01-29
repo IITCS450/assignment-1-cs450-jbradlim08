@@ -16,8 +16,8 @@ static int isnum(const char*s){
 }
 
     // arg count  // arg values
-    // check v[0] for program name and v[1] for pid
 int main(int c,char**v){
+    // check v[0] for program name and v[1] for pid
     if(c!=2 || !isnum(v[1])) 
         usage(v[0]);
 
